@@ -1,3 +1,4 @@
 /*.dist             export-ignore
+/*.stubs            export-ignore
 /.*                 export-ignore
 /composer.lock      export-ignore
