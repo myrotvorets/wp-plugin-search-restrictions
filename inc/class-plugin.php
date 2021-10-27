@@ -200,15 +200,15 @@ final class Plugin {
 				} elseif ( ! preg_match( '!\p{L} \p{L}!u', $params['name'] ) ) {
 					self::error( 400, $query );
 				}
-
-				if ( empty( $params['name'] ) && empty( $params['country'] ) && empty( $params['address'] ) && empty( $params['phone'] ) && empty( $params['desc'] ) ) {
-					self::error( 400, $query );
-				}
 			}
 
 			array_walk( $params, function ( string &$value ): void {
 				$value = Utils::sanitize_field( $value );
 			} );
+
+			if ( $query->is_search() && empty( $params['name'] ) && empty( $params['country'] ) && empty( $params['address'] ) && empty( $params['phone'] ) && empty( $params['desc'] ) ) {
+				self::error( 400, $query );
+			}
 
 			/** @psalm-var SearchParams $params */
 
