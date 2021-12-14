@@ -81,7 +81,7 @@ final class Plugin {
 
 			/** @var mixed $value */
 			foreach ( $query->query_vars as $name => &$value ) {
-				if ( ! empty( $value ) && ! isset( $whitelist[ $name ] ) && 0 ) {
+				if ( ! empty( $value ) && ! isset( $whitelist[ $name ] ) ) {
 					switch ( gettype( $value ) ) {
 						case 'array':
 							$value = [];
