@@ -78,6 +78,7 @@ final class Plugin {
 				'preview_id'    => 1,
 				'preview'       => 1,
 				'p'             => 1,
+				'cf'            => 1,
 			];
 
 			/** @var mixed $value */
