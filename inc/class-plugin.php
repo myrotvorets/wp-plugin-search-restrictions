@@ -4,10 +4,7 @@ namespace Myrotvorets\WordPress\SearchRestrictions;
 
 use WildWolf\Utils\Singleton;
 use WP;
-use WP_Error;
 use WP_Query;
-use WP_REST_Request;
-use WP_REST_Server;
 use wpdb;
 
 /**
@@ -22,8 +19,6 @@ final class Plugin {
 	}
 
 	public function init(): void {
-		add_filter( 'do_redirect_guess_404_permalink', '__return_false' );
-		add_filter( 'rest_pre_dispatch', [ $this, 'rest_pre_dispatch' ], 10, 3 );
 		if ( ! is_user_logged_in() ) {
 			add_filter( 'author_rewrite_rules', '__return_empty_array' );
 			add_filter( 'date_rewrite_rules', '__return_empty_array' );
@@ -42,20 +37,6 @@ final class Plugin {
 				add_filter( 'posts_clauses', [ $this, 'posts_clauses' ], 10, 2 );
 			}
 		}
-
-		$this->remove_unneeded_hooks();
-	}
-
-	private function remove_unneeded_hooks(): void {
-		remove_action( 'wp_head', 'rsd_link' );
-		remove_action( 'wp_head', 'wlwmanifest_link' );
-		remove_action( 'wp_head', 'wp_shortlink_wp_head' );
-		remove_action( 'wp_head', 'feed_links_extra', 3 );
-		remove_action( 'wp_head', 'wp_oembed_add_discovery_links' );
-		remove_action( 'wp_head', 'rest_output_link_wp_head' );
-
-		remove_action( 'template_redirect', 'wp_shortlink_header', 11 );
-		remove_action( 'template_redirect', 'rest_output_link_header', 11 );
 	}
 
 	private function disable_feeds(): void {
@@ -149,7 +130,7 @@ final class Plugin {
 			'withcomments',
 			'withoutcomments',
 			'search',
-			'calendar', 
+			'calendar',
 			'more',
 			'author',
 			'order',
@@ -162,7 +143,7 @@ final class Plugin {
 			'second',
 			'author_name',
 			'subpost',
-			'subpost_id', 
+			'subpost_id',
 			'taxonomy',
 			'term',
 			'cpage',
@@ -174,7 +155,7 @@ final class Plugin {
 	}
 
 	/**
-	 * @psalm-param mixed[] $query_vars 
+	 * @psalm-param mixed[] $query_vars
 	 * @psalm-return mixed[]
 	 */
 	public function request( array $query_vars ): array {
@@ -188,7 +169,7 @@ final class Plugin {
 	/**
 	 * @param string[] $params
 	 * @return string[]
-	 * @psalm-param SearchParams $params 
+	 * @psalm-param SearchParams $params
 	 * @psalm-return SearchParams
 	 */
 	public function cardfile_filter_search_params( array $params, WP_Query $query ): array {
@@ -236,7 +217,7 @@ final class Plugin {
 	}
 
 	/**
-	 * @psalm-param Clauses $clauses 
+	 * @psalm-param Clauses $clauses
 	 * @psalm-return Clauses
 	 * @global wpdb $wpdb
 	 */
@@ -254,33 +235,14 @@ final class Plugin {
 		}
 
 		return $clauses;
-	} 
-
-	/**
-	 * @param mixed $result
-	 * @return WP_Error|mixed
-	 */
-	public function rest_pre_dispatch( $result, WP_REST_Server $_srv, WP_REST_Request $request ) {
-		$method = $request->get_method();
-		$path   = $request->get_route();
-	
-		if ( ( 'GET' === $method || 'HEAD' === $method ) && preg_match( '!^/wp/v2/users(?:$|/)!', $path ) && ! current_user_can( 'list_users' ) ) {
-			$result = new WP_Error(
-				'rest_user_cannot_view',
-				'Sorry, you are not allowed to use this API.',
-				[ 'status' => rest_authorization_required_code() ]
-			);
-		}
-	
-		return $result;
 	}
 
 	/**
-	 * @param string $status_header 
-	 * @param int $code 
-	 * @param string $description 
-	 * @param string $protocol 
-	 * @return string 
+	 * @param string $status_header
+	 * @param int $code
+	 * @param string $description
+	 * @param string $protocol
+	 * @return string
 	 * @global WP_Query|null $wp_query
 	 */
 	public function status_header( $status_header, $code, $description, $protocol ) {
