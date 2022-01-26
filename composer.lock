@@ -1455,24 +1455,24 @@
         },
         {
             "name": "php-stubs/wp-cli-stubs",
-            "version": "v2.5.0",
+            "version": "v2.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/php-stubs/wp-cli-stubs.git",
-                "reference": "9140bf3f59d9df1f67f69c0d49d9364ee1684348"
+                "reference": "f1ca69572491c44d783335ce49269851b14f438c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/php-stubs/wp-cli-stubs/zipball/9140bf3f59d9df1f67f69c0d49d9364ee1684348",
-                "reference": "9140bf3f59d9df1f67f69c0d49d9364ee1684348",
+                "url": "https://api.github.com/repos/php-stubs/wp-cli-stubs/zipball/f1ca69572491c44d783335ce49269851b14f438c",
+                "reference": "f1ca69572491c44d783335ce49269851b14f438c",
                 "shasum": ""
             },
             "require": {
                 "php-stubs/wordpress-stubs": "^4.7 || ^5.0"
             },
             "require-dev": {
-                "giacocorsiglia/stubs-generator": "^0.5.0",
-                "php": "~7.1"
+                "php": "~7.1",
+                "php-stubs/generator": "^0.8.0"
             },
             "suggest": {
                 "symfony/polyfill-php73": "Symfony polyfill backporting some PHP 7.3+ features to lower PHP versions",
@@ -1493,9 +1493,9 @@
             ],
             "support": {
                 "issues": "https://github.com/php-stubs/wp-cli-stubs/issues",
-                "source": "https://github.com/php-stubs/wp-cli-stubs/tree/v2.5.0"
+                "source": "https://github.com/php-stubs/wp-cli-stubs/tree/v2.6.0"
             },
-            "time": "2021-05-19T16:06:45+00:00"
+            "time": "2022-01-26T10:46:55+00:00"
         },
         {
             "name": "phpcompatibility/php-compatibility",
