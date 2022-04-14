@@ -15,7 +15,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]')"
     steps:
       - name: Check out source code
-        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # renovate: tag=v2
+        uses: actions/checkout@f25a3a9f25bd5f4c5d77189cab02ff357b5aedeb # tag=v2
 
       - name: Set up PHP
         uses: shivammathur/setup-php@7854a0cae7fa7a5f3feac66d27bae2dc42d1067a # renovate: tag=2.17.0
