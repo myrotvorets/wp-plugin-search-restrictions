@@ -34,4 +34,12 @@ abstract class Utils {
 			&& preg_match( '/\boccupied\b/', $zone )
 			&& false === strpos( $zone, 'false-positive;' );
 	}
+
+	public static function is_exception(): bool {
+		/** @var mixed */
+		$zone = $_SERVER['HTTP_X_PSB_ZONE'] ?? '';  // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		return ! empty( $zone )
+			&& is_string( $zone )
+			&& false !== strpos( $zone, 'false-positive;' );
+	}
 }
