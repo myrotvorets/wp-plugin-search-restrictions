@@ -11,7 +11,7 @@ abstract class Utils {
 
 	public static function get_country_code(): string {
 		$keys = [
-			'HTTP_CF_IP_COUNTRY',
+			'HTTP_CF_IPCOUNTRY',
 			'HTTP_X_COUNTRY_CODE',
 		];
 
