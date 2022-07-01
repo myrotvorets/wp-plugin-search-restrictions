@@ -8,6 +8,9 @@ concurrency:
   cancel-in-progress: true
   group: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: read
+
 jobs:
   php:
     name: Build PHP part
@@ -32,7 +35,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
 
-      - name: Install Composer Dependencies
+      - name: Install dependencies
         uses: ramsey/composer-install@f680dac46551dffb2234a240d65ae806c2999dd6 # renovate: tag=2.1.0
         with:
           dependency-versions: ${{ matrix.dependencies }}
