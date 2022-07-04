@@ -2,6 +2,8 @@
 
 namespace Myrotvorets\WordPress\SearchRestrictions;
 
+use WP_Query;
+
 abstract class Utils {
 	public static function sanitize_field( string $value ): string {
 		$v = preg_replace( '/[^\p{L}]/u', ' ', $value );
@@ -41,5 +43,18 @@ abstract class Utils {
 		return ! empty( $zone )
 			&& is_string( $zone )
 			&& false !== strpos( $zone, 'false-positive;' );
+	}
+
+	public static function error( int $code ): void {
+		if ( ! headers_sent() ) {
+			$url = get_post_type_archive_link( 'criminal' );
+			assert( is_string( $url ) );
+
+			$url = add_query_arg( [ 'cferror' => $code ], $url );
+			wp_safe_redirect( $url );
+			exit;
+		}
+
+		wp_die( esc_html( "Error {$code}" ) );
 	}
 }

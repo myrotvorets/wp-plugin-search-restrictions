@@ -36,6 +36,8 @@ final class Plugin {
 			if ( ! Utils::is_occupied_territory() ) {
 				add_filter( 'posts_clauses', [ $this, 'posts_clauses' ], 10, 2 );
 			}
+
+			RateLimiter::instance();
 		}
 	}
 
@@ -181,7 +183,7 @@ final class Plugin {
 				if ( preg_match( '!путин\s*-*\s*хуйло!ui', $params['name'] ) ) {
 					$params['name'] = '';
 				} elseif ( ! preg_match( '!\p{L} \p{L}!u', $params['name'] ) ) {
-					self::error( 400, $query );
+					Utils::error( 400 );
 				}
 			}
 
@@ -190,7 +192,7 @@ final class Plugin {
 			} );
 
 			if ( $query->is_search() && empty( $params['name'] ) && empty( $params['country'] ) && empty( $params['address'] ) && empty( $params['phone'] ) && empty( $params['desc'] ) ) {
-				self::error( 400, $query );
+				Utils::error( 400 );
 			}
 
 			/** @psalm-var SearchParams $params */
@@ -201,19 +203,6 @@ final class Plugin {
 		}
 
 		return $params;
-	}
-
-	private static function error( int $code, WP_Query $query ): void {
-		if ( ! headers_sent() ) {
-			$url = get_post_type_archive_link( 'criminal' );
-			assert( is_string( $url ) );
-
-			$url = add_query_arg( [ 'cferror' => $code ], $url );
-			wp_safe_redirect( $url );
-			exit;
-		}
-
-		$query->set( 'cferror', $code );
 	}
 
 	/**
