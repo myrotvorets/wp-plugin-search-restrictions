@@ -48,7 +48,8 @@ final class RateLimiter {
 			$ratelimit_period = (int) apply_filters( 'secenh_ratelimit_period', self::RATELIMIT_PERIOD );
 			$ratelimit_limit  = (int) apply_filters( 'secenh_ratelimit_limit', self::RATELIMIT_LIMIT );
 
-			$key = 'secenh_view_ratelimit_' . $ip;
+			$prefix = md5( (string) get_option( 'siteurl' ) );
+			$key    = $prefix . ':secenh_view_ratelimit_' . $ip;
 			if ( ! $this->redis->exists( $key ) ) {
 				$this->redis->set( $key, 1, $ratelimit_period );
 			} else {
