@@ -65,6 +65,10 @@ final class RateLimiter {
 			$ratelimit_period = (int) apply_filters( "secenh_ratelimit_period_{$what}", $period );
 			$ratelimit_limit  = (int) apply_filters( "secenh_ratelimit_limit_{$what}", $limit );
 
+			if ( $ratelimit_limit < 0 || $ratelimit_period < 0 ) {
+				return;
+			}
+
 			$prefix = md5( (string) get_option( 'siteurl', '' ) );
 			$key    = sprintf( '%s:secenh_ratelimit:%s:%s', $prefix, $what, $ip );
 			if ( ! $this->redis->exists( $key ) ) {

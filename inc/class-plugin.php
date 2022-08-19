@@ -51,17 +51,20 @@ final class Plugin {
 			$query->set( 'no_found_rows', 1 );
 
 			$whitelist = [
-				'post_type'     => 1,
-				'criminal'      => 1,
-				'name'          => 1,
-				'attachment'    => 1,
-				'attachment_id' => 1,
-				'tag'           => 1,
-				'paged'         => 1,
-				'preview_id'    => 1,
-				'preview'       => 1,
-				'p'             => 1,
-				'cf'            => 1,
+				'post_type'      => 1,
+				'criminal'       => 1,
+				'name'           => 1,
+				'attachment'     => 1,
+				'attachment_id'  => 1,
+				'tag'            => 1,
+				'paged'          => 1,
+				'preview_id'     => 1,
+				'preview'        => 1,
+				'p'              => 1,
+				'cf'             => 1,
+				'nopaging'       => 1,
+				'posts_per_page' => 1,
+				'offset'         => 1,
 			];
 
 			/** @var mixed $value */
