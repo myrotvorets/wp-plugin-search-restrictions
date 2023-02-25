@@ -59,4 +59,6 @@ namespace {
 		 */
 		public function prepare( $query, ...$args );
 	}
+
+	define( 'REDIS_HOST', expr );
 }
