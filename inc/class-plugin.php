@@ -232,12 +232,12 @@ final class Plugin {
 	/**
 	 * @param string $status_header
 	 * @param int $code
-	 * @param string $description
+	 * @param string $_description
 	 * @param string $protocol
 	 * @return string
 	 * @global WP_Query|null $wp_query
 	 */
-	public function status_header( $status_header, $code, $description, $protocol ) {
+	public function status_header( $status_header, $code, $_description, $protocol ) {
 		/** @var WP_Query|null $wp_query */
 		global $wp_query;
 
