@@ -20,7 +20,8 @@ final class Plugin {
 
 	public function init(): void {
 		add_filter( 'query_vars', [ $this, 'query_vars_cferror' ], 1 );
-		add_action( 'parse_query', [ $this, 'parse_query_cferror' ], 4 );
+		add_action( 'request', [ $this, 'request_cferror' ], 4 );
+
 		if ( ! is_user_logged_in() ) {
 			add_filter( 'author_rewrite_rules', '__return_empty_array' );
 			add_filter( 'date_rewrite_rules', '__return_empty_array' );
@@ -43,16 +44,30 @@ final class Plugin {
 		}
 	}
 
+	/**
+	 * @param string[] $query_vars
+	 * @return string[]
+	 */
+	public function query_vars_cferror( array $query_vars ): array {
+		$query_vars[] = 'cferror';
+		return $query_vars;
+	}
+
+	/**
+	 * @param array<string, mixed> $qv
+	 * @return array<string, mixed>
+	 */
+	public function request_cferror( array $qv ): array {
+		if ( ! empty( $qv['cferror'] ) ) {
+			$qv['error'] = (int) $qv['cferror'];
+		}
+
+		return $qv;
+	}
+
 	private function disable_feeds(): void {
 		add_filter( 'feed_links_show_posts_feed', '__return_false' );
 		add_filter( 'feed_links_show_comments_feed', '__return_false' );
-	}
-
-	public function parse_query_cferror( WP_Query $query ): void {
-		$error = (int) $query->get( 'cferror' );
-		if ( $error ) {
-			$query->set( 'error', $error );
-		}
 	}
 
 	public function parse_query( WP_Query $query ): void {
@@ -135,11 +150,6 @@ final class Plugin {
 				403
 			);
 		}
-	}
-
-	public function query_vars_cferror( array $query_vars ): array {
-		$query_vars[] = 'cferror';
-		return $query_vars;
 	}
 
 	public function query_vars( array $query_vars ): array {
