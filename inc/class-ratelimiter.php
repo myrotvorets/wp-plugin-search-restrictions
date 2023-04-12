@@ -76,6 +76,7 @@ final class RateLimiter {
 			} else {
 				$total_calls = $this->redis->incr( $key );
 				if ( $total_calls > $ratelimit_limit ) {
+					do_action( 'secenh_ratelimited', $ip, $what, $total_calls, $ratelimit_limit, $ratelimit_period );
 					Utils::error( 429 );
 				}
 			}
