@@ -19,12 +19,13 @@ final class Plugin {
 	}
 
 	public function init(): void {
+		add_filter( 'query_vars', [ $this, 'query_vars_cferror' ], 1 );
 		if ( ! is_user_logged_in() ) {
 			add_filter( 'author_rewrite_rules', '__return_empty_array' );
 			add_filter( 'date_rewrite_rules', '__return_empty_array' );
 			add_action( 'parse_query', [ $this, 'parse_query' ], 5 );
 			add_action( 'parse_request', [ $this, 'parse_request' ], 99 );
-			add_filter( 'query_vars', [ $this, 'query_vars' ], 0 );
+			add_filter( 'query_vars', [ $this, 'query_vars' ], 1 );
 			add_filter( 'request', [ $this, 'request' ] );
 
 			add_filter( 'cardfile_filter_search_params', [ $this, 'cardfile_filter_search_params' ], 10, 2 );
@@ -126,6 +127,11 @@ final class Plugin {
 		}
 	}
 
+	public function query_vars_cferror( array $query_vars ): array {
+		$query_vars[] = 'cferror';
+		return $query_vars;
+	}
+
 	public function query_vars( array $query_vars ): array {
 		/** @psalm-var list<string> */
 		static $keys = [
@@ -155,7 +161,6 @@ final class Plugin {
 			'feed',
 		];
 
-		$query_vars[] = 'cferror';
 		return array_diff( $query_vars, $keys );
 	}
 
