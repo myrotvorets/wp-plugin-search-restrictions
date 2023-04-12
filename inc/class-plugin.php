@@ -21,6 +21,7 @@ final class Plugin {
 	public function init(): void {
 		add_filter( 'query_vars', [ $this, 'query_vars_cferror' ], 1 );
 		add_action( 'request', [ $this, 'request_cferror' ], 4 );
+		add_filter( 'wp_headers', [ $this, 'wp_headers' ], 10 );
 
 		if ( ! is_user_logged_in() ) {
 			add_filter( 'author_rewrite_rules', '__return_empty_array' );
@@ -31,8 +32,6 @@ final class Plugin {
 			add_filter( 'request', [ $this, 'request' ] );
 
 			add_filter( 'cardfile_filter_search_params', [ $this, 'cardfile_filter_search_params' ], 10, 2 );
-
-			add_filter( 'status_header', [ $this, 'status_header' ], 10, 4 );
 
 			$this->disable_feeds();
 
@@ -63,6 +62,23 @@ final class Plugin {
 		}
 
 		return $qv;
+	}
+
+	/**
+	 * @param mixed[] $headers
+	 * @return mixed[]
+	 * @global WP_Query $wp_query
+	 */
+	public function wp_headers( array $headers ): array {
+		/** @var WP_Query $wp_query */
+		global $wp_query;
+
+		$error = (int) $wp_query->get( 'cferror' );
+		if ( $error >= 400 ) {
+			$headers = array_merge( $headers, wp_get_nocache_headers() );
+		}
+
+		return $headers;
 	}
 
 	private function disable_feeds(): void {
@@ -252,32 +268,5 @@ final class Plugin {
 		}
 
 		return $clauses;
-	}
-
-	/**
-	 * @param string $status_header
-	 * @param int $code
-	 * @param string $_description
-	 * @param string $protocol
-	 * @return string
-	 * @global WP_Query|null $wp_query
-	 */
-	public function status_header( $status_header, $code, $_description, $protocol ) {
-		/** @var WP_Query|null $wp_query */
-		global $wp_query;
-
-		if ( 200 === $code && $wp_query ) {
-			$error = (int) $wp_query->get( 'cferror' );
-			if ( $error >= 400 && $error < 500 ) {
-				$status_desc = get_status_header_desc( $error );
-				if ( empty( $status_desc ) ) {
-					$status_desc = 'Error';
-				}
-
-				$status_header = "{$protocol} {$error} {$status_desc}";
-			}
-		}
-
-		return $status_header;
 	}
 }
