@@ -20,6 +20,7 @@ final class Plugin {
 
 	public function init(): void {
 		add_filter( 'query_vars', [ $this, 'query_vars_cferror' ], 1 );
+		add_action( 'parse_query', [ $this, 'parse_query_cferror' ], 4 );
 		if ( ! is_user_logged_in() ) {
 			add_filter( 'author_rewrite_rules', '__return_empty_array' );
 			add_filter( 'date_rewrite_rules', '__return_empty_array' );
@@ -47,6 +48,13 @@ final class Plugin {
 		add_filter( 'feed_links_show_comments_feed', '__return_false' );
 	}
 
+	public function parse_query_cferror( WP_Query $query ): void {
+		$error = (int) $query->get( 'cferror' );
+		if ( $error ) {
+			$query->set( 'error', $error );
+		}
+	}
+
 	public function parse_query( WP_Query $query ): void {
 		if ( 'criminal' === $query->get( 'post_type' ) ) {
 			$query->set( 'no_found_rows', 1 );
@@ -66,6 +74,8 @@ final class Plugin {
 				'nopaging'       => 1,
 				'posts_per_page' => 1,
 				'offset'         => 1,
+				'cferror'        => 1,
+				'error'          => 1,
 			];
 
 			/** @var mixed $value */
