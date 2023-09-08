@@ -102,7 +102,7 @@ final class Plugin {
 				'preview'        => 1,
 				'p'              => 1,
 				'cf'             => 1,
-				'nopaging'       => 1,
+				'nopaging'       => 1,  // phpcs:ignore WordPressVIPMinimum.Performance.NoPaging.nopaging_nopaging -- false positive
 				'posts_per_page' => 1,
 				'offset'         => 1,
 				'cferror'        => 1,
