@@ -207,6 +207,19 @@ final class Plugin {
 	public function request( array $query_vars ): array {
 		if ( isset( $query_vars['post_type'] ) && 'criminal' === $query_vars['post_type'] ) {
 			unset( $query_vars['paged'] );
+
+			/** @var mixed */
+			$cf = $query_vars['cf'] ?? null;
+			if ( is_array( $cf ) && ! empty( $cf ) ) {
+				unset(
+					$query_vars['name'],
+					$query_vars['attachment'],
+					$query_vars['attachment_id'],
+					$query_vars['preview'],
+					$query_vars['preview_id'],
+					$query_vars['p'],
+				);
+			}
 		}
 
 		return $query_vars;
