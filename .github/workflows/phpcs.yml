@@ -23,7 +23,6 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@e6f75134d35752277f093989e72e140eaa222f35 # 2.28.0
         with:
-          php-version: "7.4"
           coverage: none
         env:
           fail-fast: 'true'
