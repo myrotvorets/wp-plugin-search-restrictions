@@ -16,6 +16,7 @@ abstract class Utils {
 		];
 
 		foreach ( $keys as $key ) {
+			/** @psalm-suppress RiskyTruthyFalsyComparison */
 			// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 			if ( ! empty( $_SERVER[ $key ] ) && is_string( $_SERVER[ $key ] ) && 'XX' !== $_SERVER[ $key ] && 2 === strlen( $_SERVER[ $key ] ) ) {
 				return $_SERVER[ $key ];
