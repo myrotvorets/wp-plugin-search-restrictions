@@ -74,7 +74,7 @@ final class Plugin {
 		global $wp_query;
 
 		$error = (int) $wp_query->get( 'cferror' );
-		if ( $error >= 400 ) {
+		if ( $error > 400 ) {
 			$headers = array_merge( $headers, wp_get_nocache_headers() );
 		}
 

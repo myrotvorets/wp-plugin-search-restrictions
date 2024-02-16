@@ -50,7 +50,10 @@ abstract class Utils {
 			assert( is_string( $url ) );
 
 			$url = add_query_arg( [ 'cferror' => $code ], $url );
-			nocache_headers();
+			if ( $code > 400 ) {
+				nocache_headers();
+			}
+
 			wp_safe_redirect( $url );
 			exit;
 		}
