@@ -3,7 +3,7 @@
 namespace Myrotvorets\WordPress\SearchRestrictions;
 
 use WildWolf\Utils\Singleton;
-use WP;
+use WP_Post;
 use WP_Query;
 use wpdb;
 
@@ -19,49 +19,28 @@ final class Plugin {
 	}
 
 	public function init(): void {
-		add_filter( 'query_vars', [ $this, 'query_vars_cferror' ], 1 );
-		add_action( 'request', [ $this, 'request_cferror' ], 4 );
 		add_filter( 'wp_headers', [ $this, 'wp_headers' ], 10 );
 
 		if ( ! is_user_logged_in() ) {
 			add_filter( 'author_rewrite_rules', '__return_empty_array' );
 			add_filter( 'date_rewrite_rules', '__return_empty_array' );
-			add_action( 'parse_query', [ $this, 'parse_query' ], 5 );
-			add_action( 'parse_request', [ $this, 'parse_request' ], 99 );
-			add_filter( 'query_vars', [ $this, 'query_vars' ], 1 );
-			add_filter( 'request', [ $this, 'request' ] );
 
-			add_filter( 'cardfile_filter_search_params', [ $this, 'cardfile_filter_search_params' ], 10, 2 );
+			// Restrict available query variables for the `criminal` post type
+			add_action( 'parse_query', [ $this, 'filter_query_vars' ], 5 );
+			// Apply search restrictions for the `criminal` post type
+			add_action( 'parse_query', [ $this, 'apply_search_restrictions' ], 11 );
+
+			// Discard restricted query variables
+			add_filter( 'request', [ $this, 'restrict_query_vars_globally' ], 1 );
+			add_filter( 'request', [ $this, 'restrict_query_vars_for_criminals_search' ], 2 );
+
+			// Short-circuit the query if the `error` query variable is set
+			add_filter( 'posts_pre_query', [ $this, 'posts_pre_query' ], 10, 2 );
 
 			$this->disable_feeds();
 
-			if ( ! Utils::is_occupied_territory() ) {
-				add_filter( 'posts_clauses', [ $this, 'posts_clauses' ], 10, 2 );
-			}
-
 			RateLimiter::instance();
 		}
-	}
-
-	/**
-	 * @param string[] $query_vars
-	 * @return string[]
-	 */
-	public function query_vars_cferror( array $query_vars ): array {
-		$query_vars[] = 'cferror';
-		return $query_vars;
-	}
-
-	/**
-	 * @param array<string, mixed> $qv
-	 * @return array<string, mixed>
-	 */
-	public function request_cferror( array $qv ): array {
-		if ( ! empty( $qv['cferror'] ) ) {
-			$qv['error'] = (int) $qv['cferror'];
-		}
-
-		return $qv;
 	}
 
 	/**
@@ -73,9 +52,22 @@ final class Plugin {
 		/** @var WP_Query $wp_query */
 		global $wp_query;
 
-		$error = (int) $wp_query->get( 'cferror' );
-		if ( $error > 400 ) {
-			$headers = array_merge( $headers, wp_get_nocache_headers() );
+		$error = (int) $wp_query->get( 'error' );
+		switch ( $error ) {
+			case 400:
+				$headers['Cache-Control'] = 'public, max-age=3600';
+				break;
+
+			case 404:
+				$headers['Cache-Control'] = 'public, max-age=600';
+				break;
+
+			default:
+				if ( $error > 400 ) {
+					$headers = array_merge( $headers, wp_get_nocache_headers() );
+				}
+
+				break;
 		}
 
 		return $headers;
@@ -86,7 +78,7 @@ final class Plugin {
 		add_filter( 'feed_links_show_comments_feed', '__return_false' );
 	}
 
-	public function parse_query( WP_Query $query ): void {
+	public function filter_query_vars( WP_Query $query ): void {
 		if ( 'criminal' === $query->get( 'post_type' ) ) {
 			$query->set( 'no_found_rows', 1 );
 
@@ -105,7 +97,6 @@ final class Plugin {
 				'nopaging'       => 1,  // phpcs:ignore WordPressVIPMinimum.Performance.NoPaging.nopaging_nopaging -- false positive
 				'posts_per_page' => 1,
 				'offset'         => 1,
-				'cferror'        => 1,
 				'error'          => 1,
 			];
 
@@ -156,19 +147,50 @@ final class Plugin {
 		}
 	}
 
-	public function parse_request( WP $wp ): void {
-		/** @var scalar */
-		$post_type = $wp->query_vars['post_type'] ?? null;
-
-		if ( 'criminal' === $post_type && 'RU' === Utils::get_country_code() && false === Utils::is_exception() ) {
-			wp_die(
-				'Лицам, находящимся на территории фашистской россии и её союзников, а также тем, кто находится на временно оккупированных ей территориях, доступ к сайту ограничен.',
-				403
-			);
+	public function apply_search_restrictions( WP_Query $query ): void {
+		if ( 'criminal' !== $query->get( 'post_type' ) ) {
+			return;
 		}
+
+		$cf = $query->get( 'cf' );
+		if ( ! is_array( $cf ) || empty( $cf ) ) {
+			return;
+		}
+
+		$cf += [
+			'name'    => '',
+			'country' => '',
+			'address' => '',
+			'phone'   => '',
+			'desc'    => '',
+			'dob'     => '',
+			'type'    => 'n',
+		];
+
+		$cf['dob']  = '';
+		$cf['type'] = 'n';
+
+		array_walk( $cf, [ Utils::class, 'sanitize_field' ] );
+		/** @psalm-var SearchParams $cf */
+
+		if ( $query->is_search() ) {
+			if ( preg_match( '!^путин\s*-*\s*хуйло$!ui', $cf['name'] ) ) {
+				$cf['name'] = '';
+			} elseif ( ! preg_match( '!\p{L} \p{L}!u', $cf['name'] ) ) {
+				Utils::set_error( $query, 400 );
+				return;
+			}
+
+			if ( empty( $cf['name'] ) && empty( $cf['country'] ) && empty( $cf['address'] ) && empty( $cf['phone'] ) && empty( $cf['desc'] ) ) {
+				Utils::set_error( $query, 400 );
+				return;
+			}
+		}
+
+		$query->set( 'cf', $cf );
 	}
 
-	public function query_vars( array $query_vars ): array {
+	public function restrict_query_vars_globally( array $query_vars ): array {
 		/** @psalm-var list<string> */
 		static $keys = [
 			'm',
@@ -197,14 +219,14 @@ final class Plugin {
 			'feed',
 		];
 
-		return array_diff( $query_vars, $keys );
+		foreach ( $keys as $key ) {
+			unset( $query_vars[ $key ] );
+		}
+
+		return $query_vars;
 	}
 
-	/**
-	 * @psalm-param mixed[] $query_vars
-	 * @psalm-return mixed[]
-	 */
-	public function request( array $query_vars ): array {
+	public function restrict_query_vars_for_criminals_search( array $query_vars ): array {
 		if ( isset( $query_vars['post_type'] ) && 'criminal' === $query_vars['post_type'] ) {
 			unset( $query_vars['paged'] );
 
@@ -226,40 +248,28 @@ final class Plugin {
 	}
 
 	/**
-	 * @param string[] $params
-	 * @return string[]
-	 * @psalm-param SearchParams $params
-	 * @psalm-return SearchParams
+	 * Filters the posts array before the query takes place.
+	 *
+	 * Return a non-null value to bypass WordPress' default post queries.
+	 *
+	 * Filtering functions that require pagination information are encouraged to set
+	 * the `found_posts` and `max_num_pages` properties of the WP_Query object,
+	 * passed to the filter by reference. If WP_Query does not perform a database
+	 * query, it will not have enough information to generate these values itself.
+	 *
+	 * @param WP_Post[]|int[]|null $posts Return an array of post data to short-circuit WP's query,
+	 *                                    or null to allow WP to run its normal queries.
+	 * @param WP_Query             $query The WP_Query instance (passed by reference).
+	 * @return WP_Post[]|int[]|null
 	 */
-	public function cardfile_filter_search_params( array $params, WP_Query $query ): array {
-		if ( ! is_user_logged_in() ) {
-			$params['dob']  = '';
-			$params['type'] = 'n';
-
-			if ( $query->is_search() ) {
-				if ( preg_match( '!путин\s*-*\s*хуйло!ui', $params['name'] ) ) {
-					$params['name'] = '';
-				} elseif ( ! preg_match( '!\p{L} \p{L}!u', $params['name'] ) ) {
-					Utils::error( 400 );
-				}
-			}
-
-			array_walk( $params, function ( string &$value ): void {
-				$value = Utils::sanitize_field( $value );
-			} );
-
-			if ( $query->is_search() && empty( $params['name'] ) && empty( $params['country'] ) && empty( $params['address'] ) && empty( $params['phone'] ) && empty( $params['desc'] ) ) {
-				Utils::error( 400 );
-			}
-
-			/** @psalm-var SearchParams $params */
-
-			if ( Utils::is_occupied_territory() ) {
-				$params['country'] = 'Россия';
-			}
+	public function posts_pre_query( $posts, WP_Query $query ) {
+		if ( 'criminal' === $query->get( 'post_type' ) && (int) $query->get( 'error', 0 ) > 0 ) {
+			$query->found_posts   = 0;
+			$query->max_num_pages = 0;
+			$posts                = [];
 		}
 
-		return $params;
+		return $posts;
 	}
 
 	/**

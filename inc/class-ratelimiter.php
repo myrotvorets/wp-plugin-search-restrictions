@@ -32,21 +32,26 @@ final class RateLimiter {
 
 	public function init(): void {
 		if ( ! is_user_logged_in() ) {
-			add_action( 'parse_request', [ $this, 'parse_request' ] );
+			add_filter( 'request', [ $this, 'request' ] );
 		}
 	}
 
-	public function parse_request( WP $wp ): void {
+	/**
+	 * Filters the array of parsed query variables.
+	 *
+	 * @param array $query_vars The array of requested query variables.
+	 */
+	public function request( array $query_vars ): array {
 		if ( ! $this->redis ) {
-			return;
+			return $query_vars;
 		}
 
-		/** @var scalar */
-		$post_type = $wp->query_vars['post_type'] ?? null;
 		/** @var mixed */
-		$criminal = $wp->query_vars['criminal'] ?? null;
+		$post_type = $query_vars['post_type'] ?? null;
 		/** @var mixed */
-		$cf = $wp->query_vars['cf'] ?? null;
+		$criminal = $query_vars['criminal'] ?? null;
+		/** @var mixed */
+		$cf = $query_vars['cf'] ?? null;
 
 		$is_view   = 'criminal' === $post_type && is_string( $criminal ) && ! empty( $criminal );
 		$is_search = 'criminal' === $post_type && is_array( $cf ) && ! empty( $cf );
@@ -55,7 +60,7 @@ final class RateLimiter {
 			/** @var mixed */
 			$ip = $_SERVER['REMOTE_ADDR'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized, WordPressVIPMinimum.Variables
 			if ( ! $ip || ! is_string( $ip ) ) {
-				return;
+				return $query_vars;
 			}
 
 			$what   = $is_view ? 'view' : 'search';
@@ -66,7 +71,7 @@ final class RateLimiter {
 			$ratelimit_limit  = (int) apply_filters( "secenh_ratelimit_limit_{$what}", $limit );
 
 			if ( $ratelimit_limit < 0 || $ratelimit_period < 0 ) {
-				return;
+				return $query_vars;
 			}
 
 			$prefix = md5( (string) get_option( 'siteurl', '' ) );
@@ -77,9 +82,12 @@ final class RateLimiter {
 				$total_calls = $this->redis->incr( $key );
 				if ( $total_calls > $ratelimit_limit ) {
 					do_action( 'secenh_ratelimited', $ip, $what, $total_calls, $ratelimit_limit, $ratelimit_period );
-					Utils::error( 429 );
+					$query_vars['error'] = 429;
+					$query_vars['cf']    = null;
 				}
 			}
 		}
+
+		return $query_vars;
 	}
 }

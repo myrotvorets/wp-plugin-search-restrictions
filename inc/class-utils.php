@@ -2,11 +2,14 @@
 
 namespace Myrotvorets\WordPress\SearchRestrictions;
 
+use WP;
+use WP_Query;
+
 abstract class Utils {
-	public static function sanitize_field( string $value ): string {
-		$v = preg_replace( '/[^\p{L}]/u', ' ', $value );
-		$v = preg_replace( '/\s+/u', ' ', $v );
-		return trim( mb_strtolower( $v, 'utf-8' ) );
+	public static function sanitize_field( string &$value ): void {
+		$value = preg_replace( '/[^\p{L}]/u', ' ', $value );
+		$value = preg_replace( '/\s+/u', ' ', $value );
+		$value = trim( mb_strtolower( $value, 'utf-8' ) );
 	}
 
 	public static function get_country_code(): string {
@@ -27,15 +30,6 @@ abstract class Utils {
 		return 'XX';
 	}
 
-	public static function is_occupied_territory(): bool {
-		/** @var mixed */
-		$zone = $_SERVER['HTTP_X_PSB_ZONE'] ?? '';  // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		return ! empty( $zone )
-			&& is_string( $zone )
-			&& preg_match( '/\boccupied\b/', $zone )
-			&& false === strpos( $zone, 'false-positive;' );
-	}
-
 	public static function is_exception(): bool {
 		/** @var mixed */
 		$zone = $_SERVER['HTTP_X_PSB_ZONE'] ?? '';  // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -44,20 +38,14 @@ abstract class Utils {
 			&& false !== strpos( $zone, 'false-positive;' );
 	}
 
-	public static function error( int $code ): void {
-		if ( ! headers_sent() ) {
-			$url = get_post_type_archive_link( 'criminal' );
-			assert( is_string( $url ) );
+	public static function set_error( WP_Query $query, int $code ): void {
+		/** @var WP $wp */
+		global $wp;
+		$query->set( 'error', $code );
+		$query->set( 'cf', null );
 
-			$url = add_query_arg( [ 'cferror' => $code ], $url );
-			if ( $code > 400 ) {
-				nocache_headers();
-			}
-
-			wp_safe_redirect( $url );
-			exit;
+		if ( $query->is_main_query() ) {
+			$wp->set_query_var( 'error', $code );
 		}
-
-		wp_die( esc_html( "Error {$code}" ) );
 	}
 }
