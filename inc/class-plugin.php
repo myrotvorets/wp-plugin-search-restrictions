@@ -170,18 +170,28 @@ final class Plugin {
 		$cf['dob']  = '';
 		$cf['type'] = 'n';
 
-		array_walk( $cf, [ Utils::class, 'sanitize_field' ] );
 		/** @psalm-var SearchParams $cf */
 
+		$cf['name']    = Utils::sanitize_name( $cf['name'] );
+		$cf['country'] = Utils::sanitize_country( $cf['country'] );
+		$cf['address'] = Utils::sanitize_address( $cf['address'] );
+		$cf['phone']   = Utils::sanitize_phone( $cf['phone'] );
+		$cf['desc']    = Utils::sanitize_description( $cf['desc'] );
+
 		if ( $query->is_search() ) {
-			if ( preg_match( '!^путин\s*-*\s*хуйло$!ui', $cf['name'] ) ) {
+			if ( preg_match( '/^[\\p{Ps}\\p{Pi}`\'"]*\s*путин\s*-?\s*хуйло\s*[\\p{Pe}\\p{Pf}ʼ\'"]*$/iu', $cf['name'] ) ) {
 				$cf['name'] = '';
-			} elseif ( ! preg_match( '!\p{L} \p{L}!u', $cf['name'] ) ) {
+			} elseif ( ! preg_match( '!\\p{L} \\p{L}!u', $cf['name'] ) ) {
 				Utils::set_error( $query, 400 );
 				return;
 			}
 
 			if ( empty( $cf['name'] ) && empty( $cf['country'] ) && empty( $cf['address'] ) && empty( $cf['phone'] ) && empty( $cf['desc'] ) ) {
+				Utils::set_error( $query, 400 );
+				return;
+			}
+
+			if ( mb_strlen( $cf['name'] ) > 255 || mb_strlen( $cf['country'] ) > 64 || mb_strlen( $cf['address'] ) > 255 || mb_strlen( $cf['phone'] ) > 64 || mb_strlen( $cf['desc'] ) > 8192 ) {
 				Utils::set_error( $query, 400 );
 				return;
 			}

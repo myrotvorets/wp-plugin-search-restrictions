@@ -2,14 +2,63 @@
 
 namespace Myrotvorets\WordPress\SearchRestrictions;
 
+use Normalizer;
 use WP;
 use WP_Query;
 
 abstract class Utils {
-	public static function sanitize_field( string &$value ): void {
-		$value = preg_replace( '/[^\p{L}]/u', ' ', $value );
-		$value = preg_replace( '/\s+/u', ' ', $value );
-		$value = trim( mb_strtolower( $value, 'utf-8' ) );
+	public static function generic_sanitize( string $s ): string {
+		$s = mb_scrub( $s, 'utf-8' );
+		return Normalizer::normalize( $s, Normalizer::FORM_C );
+	}
+
+	public static function normalize_spaces( string $s ): string {
+		$s = preg_replace( '/\\s+/u', ' ', $s );
+		return trim( $s );
+	}
+
+	public static function sanitize_name( string $s ): string {
+		$s = static::generic_sanitize( $s );
+		$s = preg_replace( '/[^\\p{L}\\p{N}\'-]/u', ' ', $s );
+		return static::normalize_spaces( $s );
+	}
+
+	public static function sanitize_dob( string $s ): string {
+		$s = static::generic_sanitize( $s );
+		$s = preg_replace( '/[^\\d.-]/u', '', $s );
+		$s = trim( $s, '-.' );
+
+		if ( ! preg_match( '/^((\\d{4}-\\d{2}-\\d{2})|(\\d{2}\\.\\d{2}\\.\\d{4}))$/', $s ) ) {
+			return '';
+		}
+
+		if ( '.' === $s[2] ) {
+			$s = implode( '-', array_reverse( explode( '.', $s ) ) );
+		}
+
+		return $s;
+	}
+
+	public static function sanitize_country( string $s ): string {
+		$s = static::generic_sanitize( $s );
+		$s = preg_replace( '/[^\\p{L}\' -]/u', ' ', $s );
+		return static::normalize_spaces( $s );
+	}
+
+	public static function sanitize_address( string $s ): string {
+		$s = static::generic_sanitize( $s );
+		$s = preg_replace( '/[^\\p{L}\\p{N}\\p{P} ]/u', ' ', $s );
+		return static::normalize_spaces( $s );
+	}
+
+	public static function sanitize_phone( string $s ): string {
+		$s = preg_replace( '/[^0-9+;,]/u', '', $s );
+		$s = preg_replace( '/[;,]/u', ' ', $s );
+		return static::normalize_spaces( $s );
+	}
+
+	public static function sanitize_description( string $s ): string {
+		return static::normalize_spaces( static::generic_sanitize( $s ) );
 	}
 
 	public static function get_country_code(): string {
