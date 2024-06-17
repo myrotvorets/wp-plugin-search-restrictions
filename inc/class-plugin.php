@@ -186,6 +186,7 @@ final class Plugin {
 				return;
 			}
 
+			/** @psalm-suppress RiskyTruthyFalsyComparison */
 			if ( empty( $cf['name'] ) && empty( $cf['country'] ) && empty( $cf['address'] ) && empty( $cf['phone'] ) && empty( $cf['desc'] ) ) {
 				Utils::set_error( $query, 400 );
 				return;
