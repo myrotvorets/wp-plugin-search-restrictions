@@ -23,7 +23,7 @@
 		"php-stubs/wordpress-stubs": "^6.4.1",
 		"phpcompatibility/phpcompatibility-wp": "^2.1.4",
 		"psalm/plugin-phpunit": "^0.19.2",
-		"vimeo/psalm": "~6.4.0"
+		"vimeo/psalm": "~6.5.0"
 	},
 	"config": {
 		"sort-packages": true,
