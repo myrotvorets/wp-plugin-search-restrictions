@@ -37,6 +37,8 @@ final class Plugin {
 			// Short-circuit the query if the `error` query variable is set
 			add_filter( 'posts_pre_query', [ $this, 'posts_pre_query' ], 10, 2 );
 
+			add_filter( 'posts_clauses', [ $this, 'posts_clauses' ], 10, 2 );
+
 			$this->disable_feeds();
 
 			RateLimiter::instance();
@@ -163,12 +165,10 @@ final class Plugin {
 			'address' => '',
 			'phone'   => '',
 			'desc'    => '',
-			'dob'     => '',
-			'type'    => 'n',
 		];
 
 		$cf['dob']  = '';
-		$cf['type'] = 'n';
+		$cf['type'] = 'f';
 
 		/** @psalm-var SearchParams $cf */
 
