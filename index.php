@@ -11,7 +11,7 @@
 
 use Myrotvorets\WordPress\SearchRestrictions\Plugin;
 
-if ( defined( 'ABSPATH' ) ) {
+if ( defined( 'ABSPATH' ) && ! defined( 'WP_CLI' ) ) {
 	if ( file_exists( __DIR__ . '/vendor/autoload.php' ) ) {
 		require_once __DIR__ . '/vendor/autoload.php';
 	} elseif ( file_exists( ABSPATH . 'vendor/autoload.php' ) ) {
