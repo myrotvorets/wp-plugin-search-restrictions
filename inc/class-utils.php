@@ -13,19 +13,19 @@ abstract class Utils {
 	}
 
 	public static function normalize_spaces( string $s ): string {
-		$s = (string) preg_replace( '/\\s+/u', ' ', $s );
+		$s = preg_replace( '/\\s+/u', ' ', $s );
 		return trim( $s );
 	}
 
 	public static function sanitize_name( string $s ): string {
 		$s = static::generic_sanitize( $s );
-		$s = (string) preg_replace( '/[^\\p{L}\\p{N}\'-]/u', ' ', $s );
+		$s = preg_replace( '/[^\\p{L}\\p{N}\'-]/u', ' ', $s );
 		return static::normalize_spaces( $s );
 	}
 
 	public static function sanitize_dob( string $s ): string {
 		$s = static::generic_sanitize( $s );
-		$s = (string) preg_replace( '/[^\\d.-]/u', '', $s );
+		$s = preg_replace( '/[^\\d.-]/u', '', $s );
 		$s = trim( $s, '-.' );
 
 		if ( ! preg_match( '/^((\\d{4}-\\d{2}-\\d{2})|(\\d{2}\\.\\d{2}\\.\\d{4}))$/', $s ) ) {
@@ -41,24 +41,34 @@ abstract class Utils {
 
 	public static function sanitize_country( string $s ): string {
 		$s = static::generic_sanitize( $s );
-		$s = (string) preg_replace( '/[^\\p{L}\' -]/u', ' ', $s );
+		$s = preg_replace( '/[^\\p{L}\' -]/u', ' ', $s );
 		return static::normalize_spaces( $s );
 	}
 
 	public static function sanitize_address( string $s ): string {
 		$s = static::generic_sanitize( $s );
-		$s = (string) preg_replace( '/[^\\p{L}\\p{N}\\p{P} ]/u', ' ', $s );
+		$s = preg_replace( '/[^\\p{L}\\p{N}\\p{P} ]/u', ' ', $s );
+
+		if ( ! preg_match( '![\\p{L}\\p{N}]!u', $s ) ) {
+			return '';
+		}
+
 		return static::normalize_spaces( $s );
 	}
 
 	public static function sanitize_phone( string $s ): string {
-		$s = (string) preg_replace( '/[^0-9+;,]/u', '', $s );
-		$s = (string) preg_replace( '/[;,]/u', ' ', $s );
+		$s = preg_replace( '/[^0-9+;,]/u', '', $s );
+		$s = preg_replace( '/[;,]/u', ' ', $s );
 		return static::normalize_spaces( $s );
 	}
 
 	public static function sanitize_description( string $s ): string {
-		return static::normalize_spaces( static::generic_sanitize( $s ) );
+		$s = static::normalize_spaces( static::generic_sanitize( $s ) );
+		if ( ! preg_match( '![\\p{L}\\p{N}]!u', $s ) ) {
+			return '';
+		}
+
+		return $s;
 	}
 
 	public static function get_country_code(): string {
