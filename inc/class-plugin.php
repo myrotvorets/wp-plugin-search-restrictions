@@ -37,8 +37,6 @@ final class Plugin {
 			// Short-circuit the query if the `error` query variable is set
 			add_filter( 'posts_pre_query', [ $this, 'posts_pre_query' ], 10, 2 );
 
-			add_filter( 'posts_clauses', [ $this, 'posts_clauses' ], 10, 2 );
-
 			$this->disable_feeds();
 
 			RateLimiter::instance();
@@ -281,26 +279,5 @@ final class Plugin {
 		}
 
 		return $posts;
-	}
-
-	/**
-	 * @psalm-param Clauses $clauses
-	 * @psalm-return Clauses
-	 * @global wpdb $wpdb
-	 */
-	public function posts_clauses( array $clauses, WP_Query $query ): array {
-		/** @var wpdb $wpdb */
-		global $wpdb;
-
-		if ( ! $query->is_search() && ! is_singular() && 'criminal' === $query->get( 'post_type' ) ) {
-			if ( false === strpos( $clauses['join'], 'INNER JOIN criminals' ) ) {
-				$clauses['join'] .= " INNER JOIN criminals ON criminals.id = {$wpdb->posts}.ID ";
-			}
-
-			$old_orderby        = $clauses['orderby'] ? ", {$clauses['orderby']}" : '';
-			$clauses['orderby'] = "CASE WHEN criminals.country = 'Россия' THEN 0 ELSE 1 END ASC, {$wpdb->posts}.post_date DESC, criminals.id DESC{$old_orderby}";
-		}
-
-		return $clauses;
 	}
 }
